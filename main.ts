@@ -32,6 +32,32 @@ async function getServerStatus(csrfToken: string) {
   return await fetch("https://esoserverstatus.net/api/refresh", { headers });
 }
 
+function getZoneName(code: string) {
+  switch (code) {
+    case "EU":
+      return "欧服";
+    case "NA":
+      return "美服";
+    case "PTS":
+      return "测试服";
+    default:
+      return "未知";
+  }
+}
+
+function getPlatformName(code: string) {
+  switch (code) {
+    case "PC":
+      return "PC/Mac";
+    case "XBOX":
+      return "Xbox";
+    case "PS4":
+      return "PlayStation";
+    default:
+      return "未知";
+  }
+}
+
 let csrfTokenValue = await getXsrfToken();
 
 Deno.serve(async () => {
@@ -41,7 +67,19 @@ Deno.serve(async () => {
       csrfTokenValue = await getXsrfToken();
       response = await getServerStatus(csrfTokenValue);
     }
-    return response;
+    const data = await response.json();
+    const servers = Object.entries(data.servers).map(
+      ([key, value]) => {
+        const [platform, zone] = key.split("-");
+        return {
+          slug: key.toLowerCase(),
+          platform: getPlatformName(platform),
+          zone: getZoneName(zone),
+          status: value as boolean,
+        };
+      },
+    );
+    return Response.json(servers);
   } catch (error) {
     console.error(error);
     return new Response("Internal Server Error", { status: 500 });
