@@ -79,7 +79,10 @@ Deno.serve(async () => {
         };
       },
     );
-    return Response.json(servers);
+    return Response.json({
+      servers,
+      message: data.message,
+    });
   } catch (error) {
     console.error(error);
     return new Response("Internal Server Error", { status: 500 });
